@@ -137,6 +137,15 @@ class RuleHandler:
             )
             return
 
+        # 转换索引为整数
+        try:
+            index = int(index)
+        except (ValueError, TypeError):
+            yield event.plain_result(
+                MessageBuilder.error("索引必须是数字\n\n用法: /gm remove [索引]")
+            )
+            return
+
         # 检查管理员权限
         if not is_admin(event, self.config):
             yield event.plain_result(MessageBuilder.admin_required(event))
