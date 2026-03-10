@@ -1,26 +1,8 @@
 {
-  "enabled_groups": {
-    "description": "启用的群ID列表",
-    "type": "list",
-    "hint": "启用群管理功能的群ID列表。留空则所有群都启用。",
-    "default": []
-  },
-  "admin_list": {
-    "description": "管理员ID列表",
-    "type": "list",
-    "hint": "允许添加/删除规则和白名单/黑名单的用户ID列表。留空则所有用户都可以管理。",
-    "default": []
-  },
-  "admin_group_id": {
-    "description": "管理员群聊ID",
-    "type": "string",
-    "hint": "用于接收通知或进行管理员互动的群聊ID",
-    "default": ""
-  },
   "default_mode": {
     "description": "默认模式",
     "type": "string",
-    "hint": "当群没有配置规则时的默认处理方式",
+    "hint": "当群没有配置规则时的默认处理方式（全局默认值，各群可独立覆盖）",
     "options": ["allow", "reject"],
     "default": "allow"
   },
