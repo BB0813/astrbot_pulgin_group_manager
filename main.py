@@ -7,7 +7,7 @@ from astrbot.api import logger
 class GroupManager(Star):
     """GroupManager 插件主类"""
 
-    def __init__(self, context: Context):
+    def __init__(self, context: Context, config: dict = None):
         super().__init__(context)
 
         from gm_core.core import Config, Storage, Validator
