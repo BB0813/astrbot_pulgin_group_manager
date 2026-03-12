@@ -3,7 +3,7 @@ from astrbot.api.star import Context, Star, register
 from astrbot.api import logger
 
 
-@register( "astrbot_plugin_group_manager", "mjy1113451", "智能群管理插件 - 支持正则表达式/关键词/白名单/黑名单验证加群申请", "v1.1.0" )
+@register("astrbot_plugin_group_manager", "mjy1113451", "智能群管理插件 - 支持正则表达式/关键词/白名单/黑名单验证加群申请", "v1.1.0")
 class GroupManager(Star):
     """GroupManager 插件主类"""
 
@@ -42,38 +42,38 @@ class GroupManager(Star):
 
     # ==================== 指令组 ====================
 
-@filter.command_group("gm")
+    @filter.command_group("gm")
     async def gm(self):
         """群管理器指令组"""
         pass
 
     # ==================== 规则管理指令 ====================
 
-@gm.command("add")
+    @gm.command("add")
     async def gm_add(self, event: AstrMessageEvent, pattern: str = None):
         """ 添加关键词/正则表达式规则（自动启用本群） 用法: /gm add [关键词|正则表达式] """
         async for result in self.rule_handler.add_rule(event, pattern):
             yield result
 
-@gm.command("remove")
+    @gm.command("remove")
     async def gm_remove(self, event: AstrMessageEvent, index: int = None):
         """ 删除指定索引的规则 用法: /gm remove [索引] """
         async for result in self.rule_handler.remove_rule(event, index):
             yield result
 
-@gm.command("list")
+    @gm.command("list")
     async def gm_list(self, event: AstrMessageEvent):
         """ 查看当前群的所有规则 用法: /gm list """
         async for result in self.rule_handler.list_rules(event):
             yield result
 
-@gm.command("clear")
+    @gm.command("clear")
     async def gm_clear(self, event: AstrMessageEvent):
         """ 清空当前群的所有规则 用法: /gm clear """
         async for result in self.rule_handler.clear_rules(event):
             yield result
 
-@gm.command("test")
+    @gm.command("test")
     async def gm_test(self, event: AstrMessageEvent, test_text: str = None):
         """ 测试文本是否匹配当前群的规则 用法: /gm test [测试文本] """
         async for result in self.rule_handler.test_rule(event, test_text):
@@ -81,12 +81,12 @@ class GroupManager(Star):
 
     # ==================== 管理员管理指令 ====================
 
-@gm.group("admin")
+    @gm.group("admin")
     async def gm_admin(self):
         """管理员管理指令组"""
         pass
 
-@gm_admin.command("add")
+    @gm_admin.command("add")
     async def gm_admin_add(self, event: AstrMessageEvent, user_id: str = None):
         """ 添加本群管理员 用法: /gm admin add [用户ID] """
         if not event.message_obj.group_id:
@@ -121,7 +121,7 @@ class GroupManager(Star):
                 self.MessageBuilder.warning(f"用户 {user_id} 已是本群管理员")
             )
 
-@gm_admin.command("remove")
+    @gm_admin.command("remove")
     async def gm_admin_remove(self, event: AstrMessageEvent, user_id: str = None):
         """ 移除本群管理员 用法: /gm admin remove [用户ID] """
         if not event.message_obj.group_id:
@@ -156,7 +156,7 @@ class GroupManager(Star):
                 self.MessageBuilder.warning(f"用户 {user_id} 不是本群管理员")
             )
 
-@gm_admin.command("list")
+    @gm_admin.command("list")
     async def gm_admin_list(self, event: AstrMessageEvent):
         """ 查看本群管理员列表 用法: /gm admin list """
         if not event.message_obj.group_id:
@@ -169,7 +169,7 @@ class GroupManager(Star):
 
     # ==================== 群启用/禁用指令 ====================
 
-@gm.command("enable")
+    @gm.command("enable")
     async def gm_enable(self, event: AstrMessageEvent):
         """ 启用本群的群管理功能 用法: /gm enable """
         if not event.message_obj.group_id:
@@ -192,7 +192,7 @@ class GroupManager(Star):
             self.MessageBuilder.success("已启用本群的群管理功能")
         )
 
-@gm.command("disable")
+    @gm.command("disable")
     async def gm_disable(self, event: AstrMessageEvent):
         """ 禁用本群的群管理功能 用法: /gm disable """
         if not event.message_obj.group_id:
@@ -217,24 +217,24 @@ class GroupManager(Star):
 
     # ==================== 白名单指令 ====================
 
-@gm.group("whitelist")
+    @gm.group("whitelist")
     async def gm_whitelist(self):
         """白名单管理指令组"""
         pass
 
-@gm_whitelist.command("add")
+    @gm_whitelist.command("add")
     async def gm_whitelist_add(self, event: AstrMessageEvent, user_id: str = None):
         """ 添加用户到白名单 用法: /gm whitelist add [用户ID] """
         async for result in self.wb_handler.whitelist_add(event, user_id):
             yield result
 
-@gm_whitelist.command("remove")
+    @gm_whitelist.command("remove")
     async def gm_whitelist_remove(self, event: AstrMessageEvent, user_id: str = None):
         """ 从白名单移除用户 用法: /gm whitelist remove [用户ID] """
         async for result in self.wb_handler.whitelist_remove(event, user_id):
             yield result
 
-@gm_whitelist.command("list")
+    @gm_whitelist.command("list")
     async def gm_whitelist_list(self, event: AstrMessageEvent):
         """ 查看白名单 用法: /gm whitelist list """
         async for result in self.wb_handler.whitelist_list(event):
@@ -242,24 +242,24 @@ class GroupManager(Star):
 
     # ==================== 黑名单指令 ====================
 
-@gm.group("blacklist")
+    @gm.group("blacklist")
     async def gm_blacklist(self):
         """黑名单管理指令组"""
         pass
 
-@gm_blacklist.command("add")
+    @gm_blacklist.command("add")
     async def gm_blacklist_add(self, event: AstrMessageEvent, user_id: str = None):
         """ 添加用户到黑名单 用法: /gm blacklist add [用户ID] """
         async for result in self.wb_handler.blacklist_add(event, user_id):
             yield result
 
-@gm_blacklist.command("remove")
+    @gm_blacklist.command("remove")
     async def gm_blacklist_remove(self, event: AstrMessageEvent, user_id: str = None):
         """ 从黑名单移除用户 用法: /gm blacklist remove [用户ID] """
         async for result in self.wb_handler.blacklist_remove(event, user_id):
             yield result
 
-@gm_blacklist.command("list")
+    @gm_blacklist.command("list")
     async def gm_blacklist_list(self, event: AstrMessageEvent):
         """ 查看黑名单 用法: /gm blacklist list """
         async for result in self.wb_handler.blacklist_list(event):
@@ -267,7 +267,7 @@ class GroupManager(Star):
 
     # ==================== 帮助指令 ====================
 
-@gm.command("help", alias={"帮助"})
+    @gm.command("help", alias={"帮助"})
     async def gm_help(self, event: AstrMessageEvent):
         """ 显示帮助信息 用法: /gm help """
         yield event.plain_result(self.MessageBuilder.build_help_message())

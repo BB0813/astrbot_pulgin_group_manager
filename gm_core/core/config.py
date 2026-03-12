@@ -5,19 +5,21 @@
 """
 
 from typing import List, Optional
+from astrbot.api.star import Context
 
 
 class Config:
     """插件配置管理类"""
 
-    def __init__(self, config_dict: dict):
+    def __init__(self, context: Context):
         """
         初始化配置
 
         Args:
-            config_dict: 从 AstrBot 配置系统获取的配置字典
+            context: AstrBot 上下文对象
         """
-        self.config_dict = config_dict or {}
+        self.context = context
+        self.config_dict = context.config if hasattr(context, 'config') else {}
 
     @property
     def enabled_groups(self) -> List[str]:
@@ -139,8 +141,7 @@ class Config:
             如果是管理员返回 True，否则返回 False
             如果未配置管理员列表，则所有用户都是管理员
         """
-        # 如果没有配置管理员列表，假设所有用户都是管理员
         if not self.admin_list:
             return True
 
-        return user_id in self.admin_list
+        return str(user_id) in [str(a) for a in self.admin_list]

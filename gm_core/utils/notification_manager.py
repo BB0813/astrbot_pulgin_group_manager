@@ -9,22 +9,24 @@ from astrbot.api.event import AstrMessageEvent
 from astrbot.api.star import Star
 from astrbot.api import logger
 
-from ..core import Config, ValidationResult
+from ..core import Config, Storage, ValidationResult
 
 
 class NotificationManager:
     """通知管理器类"""
 
-    def __init__(self, plugin: Star, config: Config):
+    def __init__(self, plugin: Star, config: Config, storage: Storage):
         """
         初始化通知管理器
 
         Args:
             plugin: 插件实例
             config: 配置对象
+            storage: 存储对象
         """
         self.plugin = plugin
         self.config = config
+        self.storage = storage
 
     async def notify_admin(
         self,
@@ -53,19 +55,18 @@ class NotificationManager:
         Returns:
             是否发送成功
         """
-        # 检查是否启用通知
         if not self.config.enable_admin_notification:
             return False
 
-        # 获取管理员列表
         admin_list = self.config.admin_list
 
-        # 如果没有配置管理员列表，则不发送通知
         if not admin_list:
-            logger.info("[GroupManager] 未配置管理员列表，跳过通知")
-            return False
+            group_admins = await self.storage.get_group_admins(group_id)
+            if not group_admins:
+                logger.info("[GroupManager] 未配置管理员列表，跳过通知")
+                return False
+            admin_list = group_admins
 
-        # 构建通知消息
         message = self._build_notification_message(
             group_name=group_name,
             user_name=user_name,
@@ -75,12 +76,10 @@ class NotificationManager:
             matched_rules=matched_rules
         )
 
-        # 发送通知给所有管理员
         success_count = 0
         for admin_id in admin_list:
             try:
-                # 使用私聊方式发送通知
-                await self._send_private_message(admin_id, message)
+                await self._send_private_message(str(admin_id), message)
                 success_count += 1
 
                 if self.config.enable_logging:
@@ -116,10 +115,8 @@ class NotificationManager:
         Returns:
             格式化的通知消息
         """
-        # 获取消息模板
         templates = self.config.admin_notification_messages
 
-        # 根据验证结果选择模板
         if result == ValidationResult.WHITELISTED:
             template = templates.get("request_approved", "")
             result_text = "✅ 通过（白名单）"
@@ -129,11 +126,10 @@ class NotificationManager:
         elif result == ValidationResult.ALLOW:
             template = templates.get("request_received", "")
             result_text = "✅ 通过（匹配规则）"
-        else:  # REJECT
+        else:
             template = templates.get("request_rejected", "")
             result_text = "❌ 拒绝（未匹配规则）"
 
-        # 构建消息
         message = template.format(
             group_name=group_name,
             user_name=user_name,
@@ -142,7 +138,6 @@ class NotificationManager:
             result=result_text
         )
 
-        # 如果有匹配的规则，添加规则详情
         if matched_rules and result == ValidationResult.ALLOW:
             message += "\n\n📋 匹配的规则:\n"
             for idx, rule in enumerate(matched_rules, 1):
@@ -159,16 +154,11 @@ class NotificationManager:
             user_id: 用户ID
             message: 消息内容
         """
-        # 根据平台类型发送消息
         platform = self.config.admin_notification_platform
 
-        # 构建私聊 unified_msg_origin
-        # 格式: platform_type:user_id
         unified_msg_origin = f"{platform}:{user_id}"
 
-        # 构建消息链
         from astrbot.api.message_components import Plain
         message_chain = [Plain(message)]
 
-        # 发送消息
         await self.plugin.context.send_message(unified_msg_origin, message_chain)

@@ -157,3 +157,87 @@ class Storage:
         blacklist.remove(user_id)
         await self.save_group_blacklist(group_id, blacklist)
         return True
+
+    async def is_group_enabled(self, group_id: str) -> bool:
+        """
+        检查群是否启用
+
+        Args:
+            group_id: 群ID
+
+        Returns:
+            如果启用返回 True，否则返回 False
+        """
+        enabled_groups = await self.plugin.get_kv_data("enabled_groups", [])
+        return str(group_id) in [str(g) for g in enabled_groups]
+
+    async def enable_group(self, group_id: str) -> None:
+        """
+        启用群
+
+        Args:
+            group_id: 群ID
+        """
+        enabled_groups = await self.plugin.get_kv_data("enabled_groups", [])
+        if str(group_id) not in [str(g) for g in enabled_groups]:
+            enabled_groups.append(str(group_id))
+            await self.plugin.put_kv_data("enabled_groups", enabled_groups)
+
+    async def disable_group(self, group_id: str) -> None:
+        """
+        禁用群
+
+        Args:
+            group_id: 群ID
+        """
+        enabled_groups = await self.plugin.get_kv_data("enabled_groups", [])
+        enabled_groups = [g for g in enabled_groups if str(g) != str(group_id)]
+        await self.plugin.put_kv_data("enabled_groups", enabled_groups)
+
+    async def get_group_admins(self, group_id: str) -> List[str]:
+        """
+        获取群管理员列表
+
+        Args:
+            group_id: 群ID
+
+        Returns:
+            管理员ID列表
+        """
+        return await self.plugin.get_kv_data(f"admins_{group_id}", [])
+
+    async def add_group_admin(self, group_id: str, user_id: str) -> bool:
+        """
+        添加群管理员
+
+        Args:
+            group_id: 群ID
+            user_id: 用户ID
+
+        Returns:
+            如果添加成功返回 True，如果已存在返回 False
+        """
+        admins = await self.get_group_admins(group_id)
+        if user_id in admins:
+            return False
+        admins.append(user_id)
+        await self.plugin.put_kv_data(f"admins_{group_id}", admins)
+        return True
+
+    async def remove_group_admin(self, group_id: str, user_id: str) -> bool:
+        """
+        移除群管理员
+
+        Args:
+            group_id: 群ID
+            user_id: 用户ID
+
+        Returns:
+            如果移除成功返回 True，如果不存在返回 False
+        """
+        admins = await self.get_group_admins(group_id)
+        if user_id not in admins:
+            return False
+        admins.remove(user_id)
+        await self.plugin.put_kv_data(f"admins_{group_id}", admins)
+        return True

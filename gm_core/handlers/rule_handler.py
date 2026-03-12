@@ -9,7 +9,8 @@ from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.api import logger
 
 from ..core import Config, Storage, Validator, RuleType
-from ..utils import MessageBuilder, is_admin
+from ..utils import MessageBuilder
+from ..utils.permission import is_admin
 
 
 class RuleHandler:
@@ -38,17 +39,14 @@ class RuleHandler:
             event: 消息事件
             pattern: 关键词或正则表达式
         """
-        # 检查是否在群聊中
         if not event.message_obj.group_id:
             yield event.plain_result(MessageBuilder.error("此指令仅限群聊使用"))
             return
 
-        # 检查群是否启用
         if not self.config.is_group_enabled(event.message_obj.group_id):
             yield event.plain_result(MessageBuilder.error("当前群未启用群管理功能"))
             return
 
-        # 检查参数
         if pattern is None:
             yield event.plain_result(
                 MessageBuilder.error("请提供关键词或正则表达式\n\n"
@@ -57,16 +55,13 @@ class RuleHandler:
             )
             return
 
-        # 检查管理员权限
-        if not is_admin(event, self.config):
+        if not await is_admin(event, self.storage, self.config):
             yield event.plain_result(MessageBuilder.admin_required(event))
             return
 
-        # 判断是否为正则表达式
         is_regex = self.validator.is_regex_pattern(pattern)
 
         if is_regex:
-            # 验证正则表达式
             regex_pattern = pattern[1:-1]
             is_valid, error = self.validator.validate_regex(regex_pattern)
             if not is_valid:
@@ -78,11 +73,9 @@ class RuleHandler:
             pattern_type = RuleType.KEYWORD
             content = pattern
 
-        # 获取当前群的规则列表
         group_id = event.message_obj.group_id
         group_rules = await self.storage.get_group_rules(group_id)
 
-        # 添加新规则
         new_rule = {
             "type": pattern_type.value,
             "content": content,
@@ -91,10 +84,8 @@ class RuleHandler:
         }
         group_rules.append(new_rule)
 
-        # 保存规则
         await self.storage.save_group_rules(group_id, group_rules)
 
-        # 记录日志
         if self.config.enable_logging:
             logger.info(
                 f"[GroupManager] 群 {group_id} 添加规则: "
@@ -102,7 +93,6 @@ class RuleHandler:
                 f"操作者={event.get_sender_id()}"
             )
 
-        # 返回成功消息
         rule_count = len(group_rules)
         yield event.plain_result(
             MessageBuilder.success(
@@ -120,24 +110,20 @@ class RuleHandler:
             event: 消息事件
             index: 规则索引
         """
-        # 检查是否在群聊中
         if not event.message_obj.group_id:
             yield event.plain_result(MessageBuilder.error("此指令仅限群聊使用"))
             return
 
-        # 检查群是否启用
         if not self.config.is_group_enabled(event.message_obj.group_id):
             yield event.plain_result(MessageBuilder.error("当前群未启用群管理功能"))
             return
 
-        # 检查参数
         if index is None:
             yield event.plain_result(
                 MessageBuilder.error("请提供要删除的规则索引\n\n用法: /gm remove [索引]")
             )
             return
 
-        # 转换索引为整数
         try:
             index = int(index)
         except (ValueError, TypeError):
@@ -146,12 +132,10 @@ class RuleHandler:
             )
             return
 
-        # 检查管理员权限
-        if not is_admin(event, self.config):
+        if not await is_admin(event, self.storage, self.config):
             yield event.plain_result(MessageBuilder.admin_required(event))
             return
 
-        # 获取当前群的规则列表
         group_id = event.message_obj.group_id
         group_rules = await self.storage.get_group_rules(group_id)
 
@@ -159,20 +143,16 @@ class RuleHandler:
             yield event.plain_result(MessageBuilder.warning("当前群没有任何规则"))
             return
 
-        # 检查索引是否有效
         if index < 1 or index > len(group_rules):
             yield event.plain_result(
                 MessageBuilder.error(f"索引无效，请输入 1-{len(group_rules)} 之间的数字")
             )
             return
 
-        # 删除规则
         removed_rule = group_rules.pop(index - 1)
 
-        # 保存规则
         await self.storage.save_group_rules(group_id, group_rules)
 
-        # 记录日志
         if self.config.enable_logging:
             logger.info(
                 f"[GroupManager] 群 {group_id} 删除规则: "
@@ -180,7 +160,6 @@ class RuleHandler:
                 f"操作者={event.get_sender_id()}"
             )
 
-        # 返回成功消息
         yield event.plain_result(
             MessageBuilder.success(
                 f"成功删除规则\n"
@@ -197,21 +176,17 @@ class RuleHandler:
         Args:
             event: 消息事件
         """
-        # 检查是否在群聊中
         if not event.message_obj.group_id:
             yield event.plain_result(MessageBuilder.error("此指令仅限群聊使用"))
             return
 
-        # 检查群是否启用
         if not self.config.is_group_enabled(event.message_obj.group_id):
             yield event.plain_result(MessageBuilder.error("当前群未启用群管理功能"))
             return
 
-        # 获取当前群的规则列表
         group_id = event.message_obj.group_id
         group_rules = await self.storage.get_group_rules(group_id)
 
-        # 构建规则列表消息
         if not group_rules:
             yield event.plain_result(
                 MessageBuilder.warning("当前群没有任何规则\n\n"
@@ -227,22 +202,18 @@ class RuleHandler:
         Args:
             event: 消息事件
         """
-        # 检查是否在群聊中
         if not event.message_obj.group_id:
             yield event.plain_result(MessageBuilder.error("此指令仅限群聊使用"))
             return
 
-        # 检查群是否启用
         if not self.config.is_group_enabled(event.message_obj.group_id):
             yield event.plain_result(MessageBuilder.error("当前群未启用群管理功能"))
             return
 
-        # 检查管理员权限
-        if not is_admin(event, self.config):
+        if not await is_admin(event, self.storage, self.config):
             yield event.plain_result(MessageBuilder.admin_required(event))
             return
 
-        # 获取当前群的规则列表
         group_id = event.message_obj.group_id
         group_rules = await self.storage.get_group_rules(group_id)
 
@@ -250,17 +221,14 @@ class RuleHandler:
             yield event.plain_result(MessageBuilder.warning("当前群没有任何规则"))
             return
 
-        # 清空规则
         await self.storage.save_group_rules(group_id, [])
 
-        # 记录日志
         if self.config.enable_logging:
             logger.info(
                 f"[GroupManager] 群 {group_id} 清空所有规则, "
                 f"共删除 {len(group_rules)} 条规则, 操作者={event.get_sender_id()}"
             )
 
-        # 返回成功消息
         yield event.plain_result(
             MessageBuilder.success(f"已清空当前群的所有规则\n🗑️ 共删除 {len(group_rules)} 条规则")
         )
@@ -273,24 +241,20 @@ class RuleHandler:
             event: 消息事件
             test_text: 测试文本
         """
-        # 检查是否在群聊中
         if not event.message_obj.group_id:
             yield event.plain_result(MessageBuilder.error("此指令仅限群聊使用"))
             return
 
-        # 检查群是否启用
         if not self.config.is_group_enabled(event.message_obj.group_id):
             yield event.plain_result(MessageBuilder.error("当前群未启用群管理功能"))
             return
 
-        # 检查参数
         if test_text is None:
             yield event.plain_result(
                 MessageBuilder.error("请提供测试文本\n\n用法: /gm test [测试文本]")
             )
             return
 
-        # 获取当前群的规则列表
         group_id = event.message_obj.group_id
         group_rules = await self.storage.get_group_rules(group_id)
 
@@ -301,7 +265,6 @@ class RuleHandler:
             )
             return
 
-        # 测试匹配
         matched_rules = []
 
         for rule in group_rules:
@@ -315,6 +278,5 @@ class RuleHandler:
                 if rule["content"] in test_text:
                     matched_rules.append(rule)
 
-        # 构建测试结果消息
         matched = len(matched_rules) > 0
         yield event.plain_result(MessageBuilder.build_test_result(test_text, matched, matched_rules))
