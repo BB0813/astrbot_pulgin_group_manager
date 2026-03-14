@@ -82,6 +82,32 @@ class MessageBuilder:
         )
 
     @staticmethod
+    def build_admin_list(admins: List[str]) -> str:
+        """
+        构建管理员列表消息
+
+        Args:
+            admins: 管理员ID列表
+
+        Returns:
+            格式化后的管理员列表
+        """
+        if not admins:
+            return MessageBuilder.warning("当前群没有配置管理员\n使用 /gm admin add [用户ID] 添加")
+
+        message_parts = [
+            "📋 当前群管理员列表\n",
+            "=" * 40 + "\n"
+        ]
+
+        for idx, admin_id in enumerate(admins, 1):
+            message_parts.append(f"{idx}. {admin_id}\n")
+
+        message_parts.append(f"\n📊 总计: {len(admins)} 人")
+
+        return "".join(message_parts)
+
+    @staticmethod
     def build_rules_list(rules: List[Dict]) -> str:
         """
         构建规则列表消息

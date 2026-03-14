@@ -5,7 +5,7 @@ GroupManager - 智能群管理插件
 白名单和黑名单验证加群申请。
 
 Author: Kush-ShuL
-Version: v1.0.0
+Version: v1.1.0
 License: AGPL-v3
 """
 
